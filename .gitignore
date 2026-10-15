@@ -1,0 +1,18 @@
+# 编译构建产物
+build/
+Debug/
+Release/
+Objects/
+Listings/
+*.o
+*.d
+*.axf
+*.hex
+*.bin
+*.elf
+*.map
+
+# 编辑器与 IDE 临时文件
+.vscode/
+*.uvguix.*
+*.uvoptx
