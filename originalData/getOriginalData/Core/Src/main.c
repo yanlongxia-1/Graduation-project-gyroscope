@@ -26,6 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "bsp_dual_adc.h"
 
 /* USER CODE END Includes */
 
@@ -72,6 +73,27 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
+	/* 当前从BSP队列读出的完整数据块 */
+	static DualADC_Block debug_block;
+
+	/* 最近一个数据块的第一个采样编号 */
+	volatile uint32_t debug_first_index = 0;
+
+	/* 最近一次读取的ADC原始码值 */
+	volatile uint16_t debug_ch7 = 0;
+	volatile uint16_t debug_ch8 = 0;
+
+	/* 采样统计 */
+	volatile uint32_t debug_total_samples = 0;
+	volatile uint32_t debug_dropped_samples = 0;
+
+	/* ADC错误统计 */
+	volatile uint32_t debug_adc_errors = 0;
+	volatile uint32_t debug_adc_error_code = 0;
+
+	/* 采集模块启动状态 */
+	volatile uint32_t debug_start_error = 0;
+	
   /* USER CODE END 1 */
 
   /* MPU Configuration--------------------------------------------------------*/
@@ -104,7 +126,15 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+	
+	/*1.启动ADC*/
+	if (BSP_DualADC_Start() != HAL_OK)
+	{
+		debug_start_error = BSP_DualADC_GetStartError();
 
+		Error_Handler();
+	}
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,6 +144,26 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		if (BSP_DualADC_ReadBlock(&debug_block))
+		{
+				/* 取得当前数据块起始序号 */
+				debug_first_index = debug_block.first_index;
+
+				/* 提取第一个采样字中的两路ADC数据 */
+				debug_ch7 = BSP_DualADC_GetCH7(debug_block.samples[0]);
+
+				debug_ch8 = BSP_DualADC_GetCH8(debug_block.samples[0]);
+		}
+
+    /* 更新统计信息 */
+    debug_total_samples =BSP_DualADC_GetSampleCount();
+
+    debug_dropped_samples = BSP_DualADC_GetDroppedSamples();
+
+    debug_adc_errors = BSP_DualADC_GetErrorCount();
+
+    debug_adc_error_code = BSP_DualADC_GetLastError();
+		
   }
   /* USER CODE END 3 */
 }
